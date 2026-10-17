@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      # The image creates this superuser and database on the first start.
+      POSTGRES_DB: gridcheck
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      # Init scripts run in alphabetical order, only when the data volume is empty.
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./db/test_user.sql:/docker-entrypoint-initdb.d/02_test_user.sql:ro
+      - db_data:/var/lib/postgresql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      # Over TCP (-h) because postgres already listens on the Unix socket before it is fully set up.
+      test: ["CMD-SHELL", "pg_isready -h localhost -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  api:
+    build: .
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:
