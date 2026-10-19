@@ -19,3 +19,14 @@ def db_uri() -> str:
         user=os.environ["DB_USER"],
         password=os.environ["DB_PASSWORD"],
     )
+
+
+# Worst case for generation: no load, full generation.
+LOAD_SCALING = 0.0
+GENERATION_SCALING = 1.0
+
+# Limits of the criteria, the same for every element.
+VM_MAX_PU = 1.10
+VDE_AR_N_4105_VOLTAGE_RISE_MAX_PU = 0.03
+LINE_LOADING_MAX_PCT = 100.0
+TRAFO_LOADING_MAX_PCT = 100.0
