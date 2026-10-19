@@ -12,8 +12,11 @@ Backend service that checks PV connection requests against a low-voltage distrib
 Copy `.env.sample` to `.env` and adjust the database credentials, then start the service:
 
 ```sh
-docker compose up
+docker compose up # database, API and one worker
+docker compose up --scale worker=3 # or several workers
 ```
+
+The API stores each request as `pending`. Workers pick up pending requests from the database, run the load flow and store the verdict. Requests on the same grid are checked one at a time, in submission order; requests on different grids are checked in parallel. A worker stops after its current job on `SIGTERM` or `SIGINT`.
 
 The API listens on <http://localhost:8080>:
 

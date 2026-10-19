@@ -39,9 +39,7 @@ async def test_inconsistent_requests_are_rejected(
     update = sql.SQL("UPDATE connection_requests SET {}").format(sql.SQL(assignments))
 
     with pytest.raises(psycopg.errors.CheckViolation):
-        # A savepoint, so the failed statement doesn't abort the test transaction.
-        async with conn.transaction():
-            await conn.execute(update)
+        await conn.execute(update)
 
 
 async def test_request_for_unknown_grid_is_rejected(conn: AsyncConnection) -> None:

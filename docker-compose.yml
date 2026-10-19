@@ -32,5 +32,17 @@ services:
       db:
         condition: service_healthy
 
+  # Scale with: docker compose up --scale worker=3
+  worker:
+    build: .
+    command: ["python", "-m", "gridcheck.worker"]
+    restart: unless-stopped  # a lost database connection exits the worker
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   db_data:

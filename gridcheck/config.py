@@ -21,6 +21,14 @@ def db_uri() -> str:
     )
 
 
+LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s: %(message)s"
+
+# Worker: how long to wait when there are no pending requests, and how long a job may
+# take before the server ends the session (comfortably above one check of ~50 ms).
+WORKER_POLL_INTERVAL_S = 1.0
+WORKER_JOB_TIMEOUT_S = 60
+
+
 # Worst case for generation: no load, full generation.
 LOAD_SCALING = 0.0
 GENERATION_SCALING = 1.0

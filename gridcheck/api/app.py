@@ -11,9 +11,7 @@ from gridcheck.api.db import create_pool
 from gridcheck.api.routes import router
 from gridcheck.domain.grids import GRID_IDS, connection_points
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format=config.LOG_FORMAT)
 
 
 def create_app(db_uri: str | None = None) -> FastAPI:

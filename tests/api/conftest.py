@@ -2,25 +2,20 @@ from collections.abc import AsyncIterator
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from psycopg import AsyncConnection
 
 from gridcheck.api.app import create_app
-from gridcheck.api.db import get_connection
 
 
 @pytest.fixture
-async def client(conn: AsyncConnection) -> AsyncIterator[AsyncClient]:
-    """Client for the app, with every database call on the rolled-back test connection.
+async def client(db_uri: str) -> AsyncIterator[AsyncClient]:
+    """Client for the app, connected to the emptied test database.
 
-    ASGITransport skips the lifespan, so the app's own pool is never opened.
+    ASGITransport doesn't run the lifespan, so the fixture runs it, which opens the
+    app's own connection pool just as in production.
     """
-
-    async def test_connection() -> AsyncIterator[AsyncConnection]:
-        yield conn
-
-    app = create_app("postgresql://unused")
-    app.dependency_overrides[get_connection] = test_connection
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
+    app = create_app(db_uri)
+    async with (
+        app.router.lifespan_context(app),
+        AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client,
+    ):
         yield client

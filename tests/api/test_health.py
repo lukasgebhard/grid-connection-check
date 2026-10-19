@@ -4,7 +4,7 @@ from gridcheck.api.app import create_app
 
 
 async def test_livez_needs_no_database() -> None:
-    # No dependency override and no lifespan: any database access would fail.
+    # Without the lifespan the pool is never opened, so any database access would fail.
     app = create_app("postgresql://unused")
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
