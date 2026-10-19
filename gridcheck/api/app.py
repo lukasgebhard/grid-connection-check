@@ -7,7 +7,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from gridcheck import config
-from gridcheck.api.db import Connection, create_pool
+from gridcheck.api.db import create_pool
+from gridcheck.api.routes import router
+from gridcheck.domain.grids import GRID_IDS, connection_points
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
@@ -23,6 +25,9 @@ def create_app(db_uri: str | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        # Build the grids now, so the first request doesn't wait for pandapower.
+        for grid_id in GRID_IDS:
+            connection_points(grid_id)
         await pool.open(wait=True)
         app.state.pool = pool
         try:
@@ -31,14 +36,5 @@ def create_app(db_uri: str | None = None) -> FastAPI:
             await pool.close()
 
     app = FastAPI(title="grid-connection-check", lifespan=lifespan)
-
-    @app.get("/livez")
-    async def livez() -> dict[str, str]:
-        return {"status": "ok"}
-
-    @app.get("/readyz")
-    async def readyz(conn: Connection) -> dict[str, str]:
-        await conn.execute("SELECT 1")
-        return {"status": "ok"}
-
+    app.include_router(router)
     return app

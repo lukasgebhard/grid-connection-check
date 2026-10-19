@@ -15,7 +15,16 @@ Copy `.env.sample` to `.env` and adjust the database credentials, then start the
 docker compose up
 ```
 
-The API listens on <http://localhost:8080>. Health endpoints: `GET /livez` (liveness), `GET /readyz` (database reachable).
+The API listens on <http://localhost:8080>:
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /connection-requests` | Submit `{grid_id, bus_id, p_kw}`. Returns `202 Accepted`, a `Location` header and the request with `status: "pending"` |
+| `GET /connection-requests/{request_id}` | The request with its status and, once decided, its `result` |
+| `GET /livez` | Liveness, no database access |
+| `GET /readyz` | Readiness: the database is reachable |
+
+Unknown grids and buses that aren't connection points of the grid are rejected with `422`. Interactive API docs are at <http://localhost:8080/docs>.
 
 The database schema is a single init script, `db/schema.sql`. PostgreSQL runs it only when the data volume is empty, so after changing it, recreate the database (this deletes all data):
 
