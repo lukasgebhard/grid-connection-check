@@ -1,3 +1,5 @@
+from psycopg import AsyncConnection
+
 from gridcheck.domain.grids import GRID_IDS, base_network, connection_points
 
 
@@ -22,3 +24,8 @@ def test_connection_points_are_the_buses_with_a_load() -> None:
     for points in (rural, suburban):
         assert 0 not in points  # medium-voltage side of the transformer
         assert 1 not in points  # low-voltage busbar
+
+
+async def test_registry_matches_grids_table(conn: AsyncConnection) -> None:
+    cur = await conn.execute("SELECT grid_id FROM grids")
+    assert {grid_id for (grid_id,) in await cur.fetchall()} == GRID_IDS

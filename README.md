@@ -17,6 +17,12 @@ docker compose up
 
 The API listens on <http://localhost:8080>. Health endpoints: `GET /livez` (liveness), `GET /readyz` (database reachable).
 
+The database schema is a single init script, `db/schema.sql`. PostgreSQL runs it only when the data volume is empty, so after changing it, recreate the database (this deletes all data):
+
+```sh
+docker compose down -v
+```
+
 ## Development
 
 Everything runs from the repository root; the project is not installed as a package.
