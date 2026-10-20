@@ -23,7 +23,9 @@ def claim_next_job(conn: Connection) -> Job | None:
 
     The row lock on the grid is held until the transaction ends, so no other worker
     checks a request of the same grid meanwhile. Grids locked by other workers are
-    skipped. Returns ``None`` if no unlocked grid has pending requests.
+    skipped. Returns ``None`` if no unlocked grid has pending requests (or if we're
+    in a rare edge case where the claimed grid has no pending requests left by the time
+    its lock is acquired).
     """
     row = conn.execute(
         """
@@ -48,8 +50,14 @@ def claim_next_job(conn: Connection) -> Job | None:
         """,
         (grid_id,),
     ).fetchone()
-    # The grid had a pending request, and only the holder of the grid lock decides it.
-    assert row is not None
+
+    if row is None:
+        # The EXISTS above saw a snapshot from before the lock was acquired. The
+        # previous lock holder may have decided the grid's last pending request and
+        # committed in between; PostgreSQL doesn't recheck the condition because the
+        # grid row itself wasn't modified. Ending the transaction releases the lock.
+        return None
+
     request_id, bus_id, p_kw = row
     return Job(request_id, grid_id, RequestSpec(bus_id, float(p_kw)))
 

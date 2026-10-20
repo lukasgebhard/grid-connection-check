@@ -30,6 +30,9 @@ def run_worker(
     transaction is rolled back, its request stays pending for the next worker.
     """
     with psycopg.connect(db_uri, autocommit=True) as conn:
+        # The reads after the grid lock must see the previous lock holder's
+        # verdict (ADR-007).
+        conn.isolation_level = psycopg.IsolationLevel.READ_COMMITTED
         # The job transaction is idle while the load flow runs. If a worker hangs, the
         # server ends its session after this timeout, which releases the grid lock.
         conn.execute(

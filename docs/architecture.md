@@ -146,6 +146,9 @@ pending request of that grid. Other workers skip locked grids and take another o
 - Requests on different grids don't affect each other: each low-voltage grid has its own
   transformer, and the upstream grid is assumed to be stiff.
 - "First come, first served" is the fair order within a grid.
+- The job transaction runs at `READ COMMITTED`, which the worker sets explicitly. Each
+  statement then sees everything committed before it started, so the reads after the grid
+  lock see the verdict of the previous lock holder.
 
 **Consequences.**
 
